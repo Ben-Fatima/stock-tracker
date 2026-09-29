@@ -1,0 +1,69 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use StockTracker\Cli\ArgParser;
+use StockTracker\Cli\HttpClient;
+use StockTracker\Cli\Output;
+use StockTracker\Cli\Commands\ProductCommand;
+use StockTracker\Cli\Commands\LocationCommand;
+use StockTracker\Cli\Commands\MovementCommand;
+use StockTracker\Cli\Commands\StockCommand;
+
+$parsed  = ArgParser::parse($argv);
+$command = $parsed['command']   ?? '';
+$args    = $parsed['arguments'] ?? [];
+$options = $parsed['options']   ?? [];
+
+$baseUrl = getenv('API_BASE_URL') ?: 'http://localhost:8008';
+
+$http      = new HttpClient($baseUrl);
+$output    = new Output();
+$product   = new ProductCommand($http, $output);
+$location  = new LocationCommand($http, $output);
+$movements = new MovementCommand($http, $output);
+$stock     = new StockCommand($http, $output);
+
+match ($command) {
+    'products:list'     => $product->list($options),
+    'products:show'     => $product->show($args),
+    'products:create'   => $product->create($options),
+    'products:update'   => $product->update($args, $options),
+    'products:delete'   => $product->delete($args),
+    'locations:list'    => $location->list($options),
+    'locations:show'    => $location->show($args),
+    'locations:create'  => $location->create($options),
+    'locations:update'  => $location->update($args, $options),
+    'locations:delete'  => $location->delete($args),
+    'movements:list'    => $movements->list($options),
+    'movements:create'  => $movements->create($options),
+    'stocks:list'       => $stock->list($options),
+    'stocks:product'    => $stock->product($args, $options),
+    'stocks:location'   => $stock->location($args, $options),
+    'reports:low-stock' => $stock->lowStock($options),
+    'help', ''          => printHelp(),
+    default             => $output->error("Unknown command: {$command}"),
+};
+
+function printHelp(): void
+{
+    echo "StockTracker CLI\n\n";
+    echo "Commands:\n";
+    echo "  products:list               List all products\n";
+    echo "  products:show <id>          Show a product\n";
+    echo "  products:create --sku=...   Create a product\n";
+    echo "  products:update <id> --...  Update a product\n";
+    echo "  products:delete <id>        Delete a product\n";
+    echo "  locations:list              List all locations\n";
+    echo "  locations:show <id>         Show a location\n";
+    echo "  locations:create --code=... Create a location\n";
+    echo "  locations:update <id> --... Update a location\n";
+    echo "  locations:delete <id>       Delete a location\n";
+    echo "  movements:list              List stock movements\n";
+    echo "  movements:create --...      Create a stock movement\n";
+    echo "  stocks:list                 List stock on hand\n";
+    echo "  stocks:product <id>         Show stock for a product\n";
+    echo "  stocks:location <id>        Show stock for a location\n";
+    echo "  reports:low-stock           Show low-stock report\n";
+}
