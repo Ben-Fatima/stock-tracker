@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\StockMovement;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use App\Services\LowStockMailer;
 
 class MovementController extends Controller
 {
@@ -64,10 +65,16 @@ class MovementController extends Controller
 
             $movement = StockMovement::create($validated);
 
+            $currentStock = StockMovement::stockOnHand($validated['product_id'], $validated['location_id']);
+
+            if ($validated['type'] === 'OUT' && $currentStock < $movement->product->min_stock) {
+                LowStockMailer::send($movement->product, $movement->location, $currentStock);
+            }
+
             return response()->json([
                 'message' => 'Movement added successfully',
                 'data' => $movement,
-                'current_stock' => StockMovement::stockOnHand($validated['product_id'], $validated['location_id'])
+                'current_stock' => $currentStock
             ], 201);
         });
     }
