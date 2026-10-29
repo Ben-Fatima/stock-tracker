@@ -161,6 +161,9 @@ class MovementController extends Controller
             if($i['type'] === 'IN' || $i['type'] === 'OUT'){
                  $i['qty'] = abs($i['qty']);
             }
+            $i['sku'] = $i->product->sku;
+            $i['product_name'] = $i->product->name;
+            $i['location_code'] = $i->location->code;
         }
 
         return $paginator;
