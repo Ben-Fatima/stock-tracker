@@ -143,7 +143,7 @@ class MovementController extends Controller
      */
     private function getMovementHistoryPaginator($productId, $locationId, $type, $perPage)
     {
-        $query = StockMovement::query();
+        $query = StockMovement::with(['product', 'location']);
 
         $query->when($productId, fn($q, $id) => $q->where('product_id', $id));
         $query->when($locationId, fn($q, $id) => $q->where('location_id', $id));
